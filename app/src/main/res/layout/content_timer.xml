@@ -9,6 +9,27 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_timer" tools:context=".TimerActivity">
 
-    <TextView android:text="Hello World!" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/timerTxt"
+        android:id="@+id/timer"
+        android:textSize="72sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/timerButtonTxt"
+        android:id="@+id/button"
+        android:layout_marginTop="36dp"
+        android:onClick="onStartStop"
+        android:nestedScrollingEnabled="true"
+        android:width="150dp"
+        android:height="75dp"
+        android:layout_below="@+id/timer"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>
