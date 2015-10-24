@@ -2,6 +2,7 @@ package com.timecardclient.conortoner.timecardclient;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.MediaRouteButton;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -9,12 +10,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.Switch;
@@ -24,17 +27,22 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -44,8 +52,7 @@ import java.util.List;
 public class TimerActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "TimerActivity";
-    private static final String OUTPUT_RESULTS_FILENAME = "results.csv";
-    private static final String OUTPUT_SYNC_STATUS_FILENAME = "sync.csv";
+    private static final String OUTPUT_FILENAME = "results.csv";
     private boolean timerStarted = false;
     private Handler timerHandler = new Handler();
     private long startTime;
@@ -58,13 +65,15 @@ public class TimerActivity extends AppCompatActivity {
     private Switch wrongTest;
     private ArrayDeque<String> retryQue = new ArrayDeque<>();
     private Handler reQueHandler = new Handler();
-    private String host = null;
+    private String host = "http://192.168.224.236/:8080";
     private String marshalName = null;
     private String curentLayout = null;
 
 
 
-    private Runnable reQue = new Runnable() {
+
+
+    Runnable reQue = new Runnable() {
         @Override
         public void run() {
             if(retryQue.size()>0){
@@ -103,14 +112,7 @@ public class TimerActivity extends AppCompatActivity {
         penaltyPicker.setWrapSelectorWheel(false);
         penaltyPicker.setDisplayedValues(nums);
         penaltyPicker.setValue(0);
-        List<String> results = readFromFile(getFileForResultsStorage(OUTPUT_RESULTS_FILENAME));
-        List<String> synchedResults = readFromFile(getFileForResultsStorage(OUTPUT_SYNC_STATUS_FILENAME));
-        for(String result:results){
-            if(!synchedResults.contains(result)){
-                Log.d(LOG_TAG,"Adding item to retry queue: " + result);
-                retryQue.push(result);
-            }
-        }
+        readFromFile();
         reQueHandler.postDelayed(reQue, 0);
     }
 
@@ -227,7 +229,7 @@ public class TimerActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
                         JSONObject JsonPayload = createPayload();
-                        writeToFile(JsonPayload.toString(), OUTPUT_RESULTS_FILENAME);
+                        writeToFile(JsonPayload.toString());
                         new HttpRequestTask(JsonPayload.toString()).execute();
                     }})
                 .setNegativeButton(android.R.string.no, null).show();
@@ -270,8 +272,7 @@ public class TimerActivity extends AppCompatActivity {
         }
 
         private int testHttpPost() throws IOException {
-            //URL url = new URL("http://192.168.224.236/:8080/result");
-            URL url = new URL("http://192.168.224.145:8080/result");
+            URL url = new URL(host+"/result");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -309,7 +310,6 @@ public class TimerActivity extends AppCompatActivity {
         if(result == null || result.isEmpty() || result.charAt(0) != '2'){
             addToRetryQue(payload);
         }else {
-            writeToFile(payload,OUTPUT_SYNC_STATUS_FILENAME);
             Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
         }
     }
@@ -337,11 +337,11 @@ public class TimerActivity extends AppCompatActivity {
         return false;
     }
 
-    private File getFileForResultsStorage(String filenameSuffix) {
+    private File getFileForStorage() {
         // Get the directory for the user's public pictures directory.
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_");
         File extStore = Environment.getExternalStorageDirectory();
-        File file = new File(String.format("%s/Download/%s%s",extStore.getAbsolutePath(), sdf.format(new Date()), filenameSuffix));
+        File file = new File(String.format("%s/Download/%s%s",extStore.getAbsolutePath(), sdf.format(new Date()), OUTPUT_FILENAME));
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -352,9 +352,9 @@ public class TimerActivity extends AppCompatActivity {
         return file;
     }
 
-    private void writeToFile(String result, String filenameSuffix) {
+    private void writeToFile(String result) {
         if (isExternalStorageWritable()) {
-            File file = getFileForResultsStorage(filenameSuffix);
+            File file = getFileForStorage();
             FileWriter fileWriter = null;
             try {
                 Log.d(LOG_TAG,"Trying to write to file: " + file.getAbsolutePath());
@@ -374,10 +374,11 @@ public class TimerActivity extends AppCompatActivity {
         }
     }
 
-    private List<String> readFromFile(File file){
+    private List<String> readFromFile(){
         List<String> result = new ArrayList<>();
         BufferedReader bufferedReader = null;
         if(isExternalStorageReadable()){
+            File file = getFileForStorage();
             try {
                 FileReader fileReader = new FileReader(file);
                 bufferedReader = new BufferedReader(fileReader);
@@ -393,7 +394,7 @@ public class TimerActivity extends AppCompatActivity {
                 try {
                     bufferedReader.close();
                 } catch (IOException e) {
-                    Log.e(LOG_TAG, "Problem closing file", e);
+                    Log.e(LOG_TAG,"Problem closing file",e);
                 }
             }
         }
