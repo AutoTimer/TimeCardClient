@@ -29,7 +29,10 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,7 +45,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class TimerActivity extends AppCompatActivity {
 
@@ -103,7 +108,7 @@ public class TimerActivity extends AppCompatActivity {
         penaltyPicker.setWrapSelectorWheel(false);
         penaltyPicker.setDisplayedValues(nums);
         penaltyPicker.setValue(0);
-
+        readFromFile();
         reQueHandler.postDelayed(reQue, 0);
     }
 
@@ -276,7 +281,7 @@ public class TimerActivity extends AppCompatActivity {
     }
 
     private void saveCallback(String result, String payload) {
-        Log.d(LOG_TAG,"Result from save callback: " + result);
+        Log.d(LOG_TAG, "Result from save callback: " + result);
         if(result == null || result.isEmpty() || result.charAt(0) != '2'){
             addToRetryQue(payload);
         }else {
@@ -292,6 +297,16 @@ public class TimerActivity extends AppCompatActivity {
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
             return true;
         }
         return false;
@@ -332,5 +347,32 @@ public class TimerActivity extends AppCompatActivity {
         } else {
             Log.e(LOG_TAG, "External storage isn't writable...:-(");
         }
+    }
+
+    private List<String> readFromFile(){
+        List<String> result = new ArrayList<>();
+        BufferedReader bufferedReader = null;
+        if(isExternalStorageReadable()){
+            File file = getFileForStorage();
+            try {
+                FileReader fileReader = new FileReader(file);
+                bufferedReader = new BufferedReader(fileReader);
+                for(String line = bufferedReader.readLine(); line!=null; line = bufferedReader.readLine()){
+                    Log.d(LOG_TAG,"Read line from file: "+line);
+                    result.add(line);
+                }
+            } catch (FileNotFoundException e) {
+                Log.e(LOG_TAG,"Problem reading results from file: " + file.getAbsolutePath(),e);
+            } catch (IOException e) {
+                Log.e(LOG_TAG,"Problem reading results from file: " + file.getAbsolutePath(),e);
+            } finally {
+                try {
+                    bufferedReader.close();
+                } catch (IOException e) {
+                    Log.e(LOG_TAG,"Problem closing file",e);
+                }
+            }
+        }
+        return result;
     }
 }
