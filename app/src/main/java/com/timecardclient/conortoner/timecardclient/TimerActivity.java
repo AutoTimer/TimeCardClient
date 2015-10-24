@@ -1,8 +1,10 @@
 package com.timecardclient.conortoner.timecardclient;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.MediaRouteButton;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -17,6 +19,14 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -33,6 +43,7 @@ public class TimerActivity extends AppCompatActivity {
     private long startTime;
     private TextView timer;
     private FloatingActionButton saveFab;
+    private TimerActivity thisActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +51,7 @@ public class TimerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_timer);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        thisActivity = this;
 
         timer = (TextView) findViewById(R.id.timer);
         saveFab = (FloatingActionButton) findViewById(R.id.saveFab);
@@ -121,16 +133,77 @@ public class TimerActivity extends AppCompatActivity {
 
     public void onSave(View view) {
         new AlertDialog.Builder(this)
-                .setTitle("Title")
-                .setMessage("Do you really want to whatever?")
-                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Saving TimeCard")
+                .setMessage("Do you really want to save this timecard?")
+                .setIcon(android.R.drawable.ic_menu_save)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        Toast.makeText(TimerActivity.this, "Yaay", Toast.LENGTH_SHORT).show();
-                    }
-                })
+                        Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
+                        new HttpRequestTask().execute("http://192.168.224.236:8080/result");
+                    }})
                 .setNegativeButton(android.R.string.no, null).show();
+    }
+
+
+    private class HttpRequestTask extends AsyncTask<String, String, String> {
+
+        private Exception exception;
+        private Activity currentActivity;
+
+        protected String doInBackground(String... urls) {
+            try {
+                return "" + testHttpPost(urls[0]);
+            } catch (Exception e) {
+                this.exception = e;
+                Log.e(LOG_TAG, "network exception", e);
+                return null;
+            }
+        }
+
+//        private int testHttpPost(String urlAsString) throws IOException {
+//            URL url = new URL(urlAsString);
+//            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+//            int responseCode = urlConnection.getResponseCode();
+//            urlConnection.disconnect();
+//            return responseCode;
+//        }
+
+        private String testHttpPost(String urlAsString) throws IOException {
+            URL url = new URL(urlAsString);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/json");
+            OutputStream out = null;
+            int responseCode = 0;
+            String responseMessage;
+            try {
+                urlConnection.setDoOutput(true);
+                urlConnection.setChunkedStreamingMode(0);
+
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
+                String string = "{\"layout\": \"A\",\"timeTaken\": \"1.5\",\"time\": \"10.00\",\"driverName\": \"Name1\",\"carNumber\": \"A1\"}";
+                out.write(string.getBytes());
+
+                responseMessage = urlConnection.getResponseMessage();
+                responseCode = urlConnection.getResponseCode();
+
+            } finally {
+                urlConnection.disconnect();
+            }
+            return responseCode+":"+responseMessage;
+        }
+
+        protected void onPostExecute(String result) {
+            thisActivity.saveCallback(result);
+        }
+
+        //new MakeHttpCallTask().execute("http://www.google.co.uk");
+    }
+
+    private void saveCallback(String result) {
+        timer.setText(result);
+        Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
     }
 
     /* Checks if external storage is available for read and write */
