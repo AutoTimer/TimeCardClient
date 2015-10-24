@@ -16,16 +16,14 @@
         android:text="@string/timerTxt"
         android:id="@+id/timer"
         android:textSize="72sp"
-        android:layout_below="@+id/editText"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp" />
+        android:layout_below="@+id/carNumber"
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/timerButtonTxt"
         android:id="@+id/button"
-        android:layout_marginTop="25dp"
         android:onClick="onStartStop"
         android:nestedScrollingEnabled="true"
         android:width="150dp"
@@ -48,9 +46,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/wrongTest"
-        android:id="@+id/wTSwitch1"
-        android:layout_marginTop="25dp"
+        android:id="@+id/wTSwitch"
         android:layout_below="@+id/button"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <NumberPicker
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/penaltyPicker"
+        android:layout_below="@+id/wTSwitch"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="28dp" />
 
 </RelativeLayout>

@@ -18,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.NumberPicker;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +54,8 @@ public class TimerActivity extends AppCompatActivity {
     private TimerActivity thisActivity;
     private long stopTime;
     private EditText carNumber;
+    private NumberPicker penaltyPicker;
+    private Switch wrongTest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,18 @@ public class TimerActivity extends AppCompatActivity {
         timer = (TextView) findViewById(R.id.timer);
         saveFab = (FloatingActionButton) findViewById(R.id.saveFab);
         carNumber = (EditText) findViewById(R.id.carNumber);
+        penaltyPicker= (NumberPicker) findViewById(R.id.penaltyPicker);
+        wrongTest = (Switch)findViewById(R.id.wTSwitch);
+
+        String[] nums = new String[21];
+        for(int i=0; i<nums.length; i++)
+            nums[i] = Integer.toString(i);
+
+        penaltyPicker.setMinValue(1);
+        penaltyPicker.setMaxValue(20);
+        penaltyPicker.setWrapSelectorWheel(false);
+        penaltyPicker.setDisplayedValues(nums);
+        penaltyPicker.setValue(0);
     }
 
     @Override
@@ -164,6 +180,8 @@ public class TimerActivity extends AppCompatActivity {
             payload.put("layout","A");
             payload.put("startTime",startTime);
             payload.put("endTime",stopTime);
+            payload.put("WrongTest", wrongTest.isChecked());
+            payload.put("Penalties", penaltyPicker.getValue());
             payload.put("runTime", "10:00");
             payload.put("carNumber", carNumber.getText());
         } catch (JSONException e) {
