@@ -194,6 +194,7 @@ public class TimerActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
                         JSONObject JsonPayload = createPayload();
+                        writeToFile(JsonPayload.toString());
                         new HttpRequestTask(JsonPayload.toString()).execute();
                     }})
                 .setNegativeButton(android.R.string.no, null).show();
@@ -236,14 +237,6 @@ public class TimerActivity extends AppCompatActivity {
             }
         }
 
-//        private int testHttpPost(String urlAsString) throws IOException {
-//            URL url = new URL(urlAsString);
-//            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-//            int responseCode = urlConnection.getResponseCode();
-//            urlConnection.disconnect();
-//            return responseCode;
-//        }
-
         private int testHttpPost() throws IOException {
             URL url = new URL("http://192.168.224.236:8080/result2");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -276,8 +269,6 @@ public class TimerActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             thisActivity.saveCallback(result, payload);
         }
-
-        //new MakeHttpCallTask().execute("http://www.google.co.uk");
     }
 
     private void saveCallback(String result, String payload) {
@@ -303,22 +294,38 @@ public class TimerActivity extends AppCompatActivity {
 
     private File getFileForStorage() {
         // Get the directory for the user's public pictures directory.
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyddMM_");
-
-        File file = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), String.format("%s%s", sdf.format(new Date()), OUTPUT_FILENAME));
-        if (!file.mkdirs()) {
-            Log.e(LOG_TAG, "Directory not created");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_");
+        File extStore = Environment.getExternalStorageDirectory();
+        File file = new File(String.format("%s/Download/%s%s",extStore.getAbsolutePath(), sdf.format(new Date()), OUTPUT_FILENAME));
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                Log.d(LOG_TAG, String.format("Problem creating result file: %s", file.getName()), e);
+            }
         }
         return file;
     }
 
-    private void writeToFile(String result){
-        File file = getFileForStorage();
-        try {
-            FileWriter fileWriter = new FileWriter(file,true);
-        } catch (IOException e) {
-            Log.e(LOG_TAG,String.format("Something went wrong writing to the file: %s",file.getName()),e);
+    private void writeToFile(String result) {
+        if (isExternalStorageWritable()) {
+            File file = getFileForStorage();
+            FileWriter fileWriter = null;
+            try {
+                Log.d(LOG_TAG,"Trying to write to file: " + file.getAbsolutePath());
+                fileWriter = new FileWriter(file, true);
+                fileWriter.write(result);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, String.format("Something went wrong writing to the file: %s", file.getName()), e);
+            } finally {
+                try {
+                    fileWriter.close();
+                } catch (IOException e) {
+                    Log.e(LOG_TAG,"Something went wrong writing file",e);
+                }
+            }
+        } else {
+            Log.e(LOG_TAG, "External storage isn't writable...:-(");
         }
     }
 }
