@@ -75,7 +75,6 @@ public class TimerActivity extends AppCompatActivity {
     };
 
     private void retryFailedSaves() {
-
         Log.e(LOG_TAG, "retrying network calls, que size: "+retryQue.size());
         new HttpRequestTask(retryQue.pop()).execute();
     }
@@ -203,12 +202,11 @@ public class TimerActivity extends AppCompatActivity {
     private JSONObject createPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("layout","A");
+            payload.put("layout","1");
             payload.put("startTime",startTime);
             payload.put("endTime",stopTime);
-            payload.put("WrongTest", wrongTest.isChecked());
-            payload.put("Penalties", penaltyPicker.getValue());
-            payload.put("runTime", "10:00");
+            payload.put("wrongTest", wrongTest.isChecked());
+            payload.put("penalty", penaltyPicker.getValue());
             payload.put("carNumber", carNumber.getText());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -238,7 +236,7 @@ public class TimerActivity extends AppCompatActivity {
         }
 
         private int testHttpPost() throws IOException {
-            URL url = new URL("http://192.168.224.236:8080/result2");
+            URL url = new URL("http://192.168.224.236/:8080/result");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -272,7 +270,8 @@ public class TimerActivity extends AppCompatActivity {
     }
 
     private void saveCallback(String result, String payload) {
-        if(result.charAt(0) != '2'){
+        Log.d(LOG_TAG,"Result from save callback: " + result);
+        if(result == null || result.isEmpty() || result.charAt(0) != '2'){
             addToRetryQue(payload);
         }else {
             Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
