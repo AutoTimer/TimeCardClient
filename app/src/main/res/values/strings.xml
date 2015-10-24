@@ -5,5 +5,8 @@
     <string name="timerButtonTxt">Start/Stop</string>
     <string name="timerStateLable">timerState</string>
     <string name="startTimeLable">startTime</string>
+    <string name="stopTimeLable">stopTime</string>
+    <string name="carNumberHint">Car Number</string>
+    <string name="wrongTest">W.T</string>
 
 </resources>

@@ -17,14 +17,20 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -44,6 +50,8 @@ public class TimerActivity extends AppCompatActivity {
     private TextView timer;
     private FloatingActionButton saveFab;
     private TimerActivity thisActivity;
+    private long stopTime;
+    private EditText carNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,7 @@ public class TimerActivity extends AppCompatActivity {
 
         timer = (TextView) findViewById(R.id.timer);
         saveFab = (FloatingActionButton) findViewById(R.id.saveFab);
+        carNumber = (EditText) findViewById(R.id.carNumber);
     }
 
     @Override
@@ -82,6 +91,7 @@ public class TimerActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putLong(getString(R.string.startTimeLable), startTime);
+        savedInstanceState.putLong(getString(R.string.stopTimeLable), stopTime);
         savedInstanceState.putBoolean(getString(R.string.timerStateLable), timerStarted);
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -90,6 +100,7 @@ public class TimerActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         startTime = savedInstanceState.getLong(getString(R.string.startTimeLable));
+        stopTime = savedInstanceState.getLong(getString(R.string.stopTimeLable));
         timerStarted = savedInstanceState.getBoolean(getString(R.string.timerStateLable));
         if (timerStarted) {
             timerHandler.postDelayed(startTimer, 0);
@@ -104,6 +115,7 @@ public class TimerActivity extends AppCompatActivity {
             timerHandler.postDelayed(startTimer, 0);
             saveFab.setVisibility(View.INVISIBLE);
         } else {
+            stopTime = System.currentTimeMillis();
             timerStarted = false;
             timerHandler.removeCallbacks(startTimer);
             saveFab.setVisibility(View.VISIBLE);
@@ -140,9 +152,24 @@ public class TimerActivity extends AppCompatActivity {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
                         Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
-                        new HttpRequestTask().execute("http://192.168.224.236:8080/result");
+                        JSONObject JsonPayload = createPayload();
+                        new HttpRequestTask(JsonPayload.toString()).execute("http://192.168.224.236:8080/result");
                     }})
                 .setNegativeButton(android.R.string.no, null).show();
+    }
+
+    private JSONObject createPayload() {
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("layout","A");
+            payload.put("startTime",startTime);
+            payload.put("endTime",stopTime);
+            payload.put("runTime", "10:00");
+            payload.put("carNumber", carNumber.getText());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return payload;
     }
 
 
@@ -150,6 +177,11 @@ public class TimerActivity extends AppCompatActivity {
 
         private Exception exception;
         private Activity currentActivity;
+        private String payload;
+
+        public HttpRequestTask(String inPayload){
+            payload = inPayload;
+        }
 
         protected String doInBackground(String... urls) {
             try {
@@ -169,7 +201,7 @@ public class TimerActivity extends AppCompatActivity {
 //            return responseCode;
 //        }
 
-        private String testHttpPost(String urlAsString) throws IOException {
+        private int testHttpPost(String urlAsString) throws IOException {
             URL url = new URL(urlAsString);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
@@ -182,16 +214,20 @@ public class TimerActivity extends AppCompatActivity {
                 urlConnection.setChunkedStreamingMode(0);
 
                 out = new BufferedOutputStream(urlConnection.getOutputStream());
-                String string = "{\"layout\": \"A\",\"timeTaken\": \"1.5\",\"time\": \"10.00\",\"driverName\": \"Name1\",\"carNumber\": \"A1\"}";
-                out.write(string.getBytes());
+
+                out.write(payload.getBytes("UTF-8"));
+                Log.e(LOG_TAG, "payload :" + payload);
+                out.flush();
 
                 responseMessage = urlConnection.getResponseMessage();
                 responseCode = urlConnection.getResponseCode();
 
+                Log.e(LOG_TAG, responseCode+":"+responseMessage);
+
             } finally {
                 urlConnection.disconnect();
             }
-            return responseCode+":"+responseMessage;
+            return responseCode;
         }
 
         protected void onPostExecute(String result) {
@@ -202,7 +238,6 @@ public class TimerActivity extends AppCompatActivity {
     }
 
     private void saveCallback(String result) {
-        timer.setText(result);
         Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
     }
 
