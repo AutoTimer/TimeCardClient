@@ -4,12 +4,32 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome To Setings"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal"
+        android:id="@+id/hostEditText"
+        android:width="200dp"
+        android:hint="@string/hostHint"
+        android:layout_above="@+id/marshalEditText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="92dp" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/marshalEditText"
+        android:width="200dp"
+        android:hint="@string/marshalHint"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignStart="@+id/hostEditText" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/layoutEditText"
+        android:width="200dp"
+        android:hint="@string/layoutHint"
+        android:layout_below="@+id/marshalEditText"
+        android:layout_alignStart="@+id/hostEditText"
+        android:layout_marginTop="84dp" />
 </RelativeLayout>

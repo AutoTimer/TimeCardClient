@@ -65,6 +65,9 @@ public class TimerActivity extends AppCompatActivity {
     private Switch wrongTest;
     private ArrayDeque<String> retryQue = new ArrayDeque<>();
     private Handler reQueHandler = new Handler();
+    private String host = null;
+    private String marshalName = null;
+    private String curentLayout = null;
 
 
 
@@ -79,6 +82,7 @@ public class TimerActivity extends AppCompatActivity {
             reQueHandler.postDelayed(this, 20000);
         }
     };
+
 
     private void retryFailedSaves() {
         Log.e(LOG_TAG, "retrying network calls, que size: "+retryQue.size());
@@ -136,7 +140,28 @@ public class TimerActivity extends AppCompatActivity {
 
     private void openSettings() {
         Intent i = new Intent(getApplicationContext(), SettingsActivity.class);
-        startActivity(i);
+
+        i.putExtra("hostLocation",host);
+        i.putExtra("marshalName",marshalName);
+        i.putExtra("layout", curentLayout);
+
+        startActivityForResult(i, 1);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+        switch(requestCode) {
+            case (1) : {
+                if (resultCode == Activity.RESULT_OK) {
+                    Bundle extras = data.getExtras();
+                    host = data.getStringExtra("hostLocation");
+                    marshalName = data.getStringExtra("marshalName");
+                    curentLayout = data.getStringExtra("layout");
+                }
+                break;
+            }
+        }
     }
 
     @Override

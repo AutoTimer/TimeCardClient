@@ -8,5 +8,11 @@
     <string name="stopTimeLable">stopTime</string>
     <string name="carNumberHint">Car Number</string>
     <string name="wrongTest">W.T</string>
+    <string name="layoutHint">Layout Name</string>
+    <string name="marshalHint">Marshal Name</string>
+    <string name="hostHint">Host Address</string>
+    <string name="layoutKey">LayoutKey</string>
+    <string name="marshalKey">MarshalKey</string>
+    <string name="hostKey">HostKey</string>
 
 </resources>
