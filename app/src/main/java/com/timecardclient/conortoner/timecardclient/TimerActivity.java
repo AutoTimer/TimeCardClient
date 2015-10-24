@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.Date;
 
 public class TimerActivity extends AppCompatActivity {
@@ -56,6 +57,28 @@ public class TimerActivity extends AppCompatActivity {
     private EditText carNumber;
     private NumberPicker penaltyPicker;
     private Switch wrongTest;
+    private ArrayDeque<String> retryQue = new ArrayDeque<>();
+    private Handler reQueHandler = new Handler();
+
+
+
+
+
+    Runnable reQue = new Runnable() {
+        @Override
+        public void run() {
+            if(retryQue.size()>0){
+                retryFailedSaves();
+            }
+            reQueHandler.postDelayed(this, 20000);
+        }
+    };
+
+    private void retryFailedSaves() {
+
+        Log.e(LOG_TAG, "retrying network calls, que size: "+retryQue.size());
+        new HttpRequestTask(retryQue.pop()).execute();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +103,8 @@ public class TimerActivity extends AppCompatActivity {
         penaltyPicker.setWrapSelectorWheel(false);
         penaltyPicker.setDisplayedValues(nums);
         penaltyPicker.setValue(0);
+
+        reQueHandler.postDelayed(reQue, 0);
     }
 
     @Override
@@ -169,7 +194,7 @@ public class TimerActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
                         JSONObject JsonPayload = createPayload();
-                        new HttpRequestTask(JsonPayload.toString()).execute("http://192.168.224.236:8080/result");
+                        new HttpRequestTask(JsonPayload.toString()).execute();
                     }})
                 .setNegativeButton(android.R.string.no, null).show();
     }
@@ -203,7 +228,7 @@ public class TimerActivity extends AppCompatActivity {
 
         protected String doInBackground(String... urls) {
             try {
-                return "" + testHttpPost(urls[0]);
+                return "" + testHttpPost();
             } catch (Exception e) {
                 this.exception = e;
                 Log.e(LOG_TAG, "network exception", e);
@@ -219,8 +244,8 @@ public class TimerActivity extends AppCompatActivity {
 //            return responseCode;
 //        }
 
-        private int testHttpPost(String urlAsString) throws IOException {
-            URL url = new URL(urlAsString);
+        private int testHttpPost() throws IOException {
+            URL url = new URL("http://192.168.224.236:8080/result2");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -249,14 +274,22 @@ public class TimerActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(String result) {
-            thisActivity.saveCallback(result);
+            thisActivity.saveCallback(result, payload);
         }
 
         //new MakeHttpCallTask().execute("http://www.google.co.uk");
     }
 
-    private void saveCallback(String result) {
-        Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
+    private void saveCallback(String result, String payload) {
+        if(result.charAt(0) != '2'){
+            addToRetryQue(payload);
+        }else {
+            Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void addToRetryQue(String payload) {
+        retryQue.push(payload);
     }
 
     /* Checks if external storage is available for read and write */
