@@ -48,6 +48,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class TimerActivity extends AppCompatActivity {
 
@@ -73,12 +74,10 @@ public class TimerActivity extends AppCompatActivity {
     private Button resetButton = null;
 
 
-
-
     private Runnable reQue = new Runnable() {
         @Override
         public void run() {
-            if(retryQue.size()>0){
+            if (retryQue.size() > 0) {
                 retryFailedSaves();
             }
             reQueHandler.postDelayed(this, 20000);
@@ -87,7 +86,7 @@ public class TimerActivity extends AppCompatActivity {
 
 
     private void retryFailedSaves() {
-        Log.e(LOG_TAG, "retrying network calls, que size: "+retryQue.size());
+        Log.e(LOG_TAG, "retrying network calls, que size: " + retryQue.size());
         new HttpRequestTask(retryQue.pop()).execute();
     }
 
@@ -101,14 +100,15 @@ public class TimerActivity extends AppCompatActivity {
 
         timer = (TextView) findViewById(R.id.timer);
         saveFab = (FloatingActionButton) findViewById(R.id.saveFab);
+        saveFab.hide();
         carNumber = (EditText) findViewById(R.id.carNumber);
-        penaltyPicker= (NumberPicker) findViewById(R.id.penaltyPicker);
-        wrongTest = (Switch)findViewById(R.id.wTSwitch);
-        startStopButton = (Button)findViewById(R.id.button);
-        resetButton = (Button)findViewById(R.id.resetButton);
+        penaltyPicker = (NumberPicker) findViewById(R.id.penaltyPicker);
+        wrongTest = (Switch) findViewById(R.id.wTSwitch);
+        startStopButton = (Button) findViewById(R.id.button);
+        resetButton = (Button) findViewById(R.id.resetButton);
 
         String[] nums = new String[21];
-        for(int i=0; i<nums.length; i++)
+        for (int i = 0; i < nums.length; i++)
             nums[i] = Integer.toString(i);
 
         penaltyPicker.setMinValue(0);
@@ -118,9 +118,9 @@ public class TimerActivity extends AppCompatActivity {
         penaltyPicker.setValue(0);
         List<String> results = readFromFile(getFileForResultsStorage(OUTPUT_RESULTS_FILENAME));
         List<String> synchedResults = readFromFile(getFileForResultsStorage(OUTPUT_SYNC_STATUS_FILENAME));
-        for(String result:results){
-            if(!synchedResults.contains(result)){
-                Log.d(LOG_TAG,"Adding item to retry queue: " + result);
+        for (String result : results) {
+            if (!synchedResults.contains(result)) {
+                Log.d(LOG_TAG, "Adding item to retry queue: " + result);
                 retryQue.push(result);
             }
         }
@@ -152,8 +152,8 @@ public class TimerActivity extends AppCompatActivity {
     private void openSettings() {
         Intent i = new Intent(getApplicationContext(), SettingsActivity.class);
 
-        i.putExtra("hostLocation",host);
-        i.putExtra("marshalName",marshalName);
+        i.putExtra("hostLocation", host);
+        i.putExtra("marshalName", marshalName);
         i.putExtra("layout", curentLayout);
 
         startActivityForResult(i, 1);
@@ -162,8 +162,8 @@ public class TimerActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
-            case (1) : {
+        switch (requestCode) {
+            case (1): {
                 if (resultCode == Activity.RESULT_OK) {
                     Bundle extras = data.getExtras();
                     host = data.getStringExtra("hostLocation");
@@ -196,7 +196,7 @@ public class TimerActivity extends AppCompatActivity {
 
     public void onStartStop(View view) {
         if (!timerStarted) {
-            if(allFieldsPopulated()) {
+            if (allFieldsPopulated()) {
                 timerStarted = true;
                 startTime = System.currentTimeMillis();
                 timerHandler.removeCallbacks(startTimer);
@@ -217,28 +217,40 @@ public class TimerActivity extends AppCompatActivity {
 
     private boolean allFieldsPopulated() {
         try {
-            validateStringField("Layout", curentLayout);
+            validateStringField("Marshal Name in Settings", marshalName);
+            validateStringField("Layout in Settings", curentLayout);
+            validateNumberField("Layout in Settings", curentLayout);
             validateStringField("Car Number", carNumber.getText().toString());
-            validateStringField("Marshal Name", marshalName);
             return true;
-        } catch(Exception e) {
+        } catch (Exception e) {
             return false;
+        }
+    }
+
+    private void validateNumberField(String name, String value) throws Exception {
+        Log.d(LOG_TAG, String.format("Trying to parse %s as a number", value));
+        if(!Pattern.matches("[0-9]+",value)){
+            new AlertDialog.Builder(this)
+                    .setTitle("Ooops!")
+                    .setMessage(String.format("You haven't entered a number for %s!", name))
+                    .setIcon(android.R.drawable.ic_dialog_alert).show();
+            throw new Exception(String.format("Field: %s invalid.", name));
         }
     }
 
     private void validateStringField(String name, String value) throws Exception {
         boolean result = (value != null && !"".equals(value.trim()));
-        if(!result){
+        if (!result) {
             new AlertDialog.Builder(this)
                     .setTitle("Ooops!")
-                    .setMessage(String.format("You haven't entered %s!",name))
+                    .setMessage(String.format("You haven't entered a valid %s!", name))
                     .setIcon(android.R.drawable.ic_dialog_alert).show();
             throw new Exception(String.format("Field: %s invalid.", name));
         }
     }
 
 
-    public void onReset(View view){
+    public void onReset(View view) {
         stopTime = System.currentTimeMillis();
         timerStarted = false;
         timerHandler.removeCallbacks(startTimer);
@@ -281,16 +293,17 @@ public class TimerActivity extends AppCompatActivity {
                         JSONObject JsonPayload = createPayload();
                         writeToFile(JsonPayload.toString(), OUTPUT_RESULTS_FILENAME);
                         new HttpRequestTask(JsonPayload.toString()).execute();
-                    }})
+                    }
+                })
                 .setNegativeButton(android.R.string.no, null).show();
     }
 
     private JSONObject createPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("layout",curentLayout);
-            payload.put("startTime",startTime);
-            payload.put("endTime",stopTime);
+            payload.put("layout", curentLayout);
+            payload.put("startTime", startTime);
+            payload.put("endTime", stopTime);
             payload.put("wrongTest", wrongTest.isChecked());
             payload.put("penalty", penaltyPicker.getValue());
             payload.put("carNumber", carNumber.getText());
@@ -308,7 +321,7 @@ public class TimerActivity extends AppCompatActivity {
         private Activity currentActivity;
         private String payload;
 
-        public HttpRequestTask(String inPayload){
+        public HttpRequestTask(String inPayload) {
             payload = inPayload;
         }
 
@@ -323,7 +336,7 @@ public class TimerActivity extends AppCompatActivity {
         }
 
         private int testHttpPost() throws IOException {
-            URL url = new URL(host+"/result");
+            URL url = new URL(host + "/result");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -343,7 +356,7 @@ public class TimerActivity extends AppCompatActivity {
                 responseMessage = urlConnection.getResponseMessage();
                 responseCode = urlConnection.getResponseCode();
 
-                Log.e(LOG_TAG, responseCode+":"+responseMessage);
+                Log.e(LOG_TAG, responseCode + ":" + responseMessage);
 
             } finally {
                 urlConnection.disconnect();
@@ -358,10 +371,10 @@ public class TimerActivity extends AppCompatActivity {
 
     private void saveCallback(String result, String payload) {
         Log.d(LOG_TAG, "Result from save callback: " + result);
-        if(result == null || result.isEmpty() || result.charAt(0) != '2'){
+        if (result == null || result.isEmpty() || result.charAt(0) != '2') {
             addToRetryQue(payload);
-        }else {
-            writeToFile(payload,OUTPUT_SYNC_STATUS_FILENAME);
+        } else {
+            writeToFile(payload, OUTPUT_SYNC_STATUS_FILENAME);
             Toast.makeText(TimerActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
         }
     }
@@ -393,7 +406,7 @@ public class TimerActivity extends AppCompatActivity {
         // Get the directory for the user's public pictures directory.
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_");
         File extStore = Environment.getExternalStorageDirectory();
-        File file = new File(String.format("%s/Download/%s%s",extStore.getAbsolutePath(), sdf.format(new Date()), filenameSuffix));
+        File file = new File(String.format("%s/Download/%s%s", extStore.getAbsolutePath(), sdf.format(new Date()), filenameSuffix));
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -409,7 +422,7 @@ public class TimerActivity extends AppCompatActivity {
             File file = getFileForResultsStorage(filenameSuffix);
             FileWriter fileWriter = null;
             try {
-                Log.d(LOG_TAG,"Trying to write to file: " + file.getAbsolutePath());
+                Log.d(LOG_TAG, "Trying to write to file: " + file.getAbsolutePath());
                 fileWriter = new FileWriter(file, true);
                 fileWriter.write(result);
             } catch (IOException e) {
@@ -418,7 +431,7 @@ public class TimerActivity extends AppCompatActivity {
                 try {
                     fileWriter.close();
                 } catch (IOException e) {
-                    Log.e(LOG_TAG,"Something went wrong writing file",e);
+                    Log.e(LOG_TAG, "Something went wrong writing file", e);
                 }
             }
         } else {
@@ -426,21 +439,21 @@ public class TimerActivity extends AppCompatActivity {
         }
     }
 
-    private List<String> readFromFile(File file){
+    private List<String> readFromFile(File file) {
         List<String> result = new ArrayList<>();
         BufferedReader bufferedReader = null;
-        if(isExternalStorageReadable()){
+        if (isExternalStorageReadable()) {
             try {
                 FileReader fileReader = new FileReader(file);
                 bufferedReader = new BufferedReader(fileReader);
-                for(String line = bufferedReader.readLine(); line!=null; line = bufferedReader.readLine()){
-                    Log.d(LOG_TAG,"Read line from file: "+line);
+                for (String line = bufferedReader.readLine(); line != null; line = bufferedReader.readLine()) {
+                    Log.d(LOG_TAG, "Read line from file: " + line);
                     result.add(line);
                 }
             } catch (FileNotFoundException e) {
-                Log.e(LOG_TAG,"Problem reading results from file: " + file.getAbsolutePath(),e);
+                Log.e(LOG_TAG, "Problem reading results from file: " + file.getAbsolutePath(), e);
             } catch (IOException e) {
-                Log.e(LOG_TAG,"Problem reading results from file: " + file.getAbsolutePath(),e);
+                Log.e(LOG_TAG, "Problem reading results from file: " + file.getAbsolutePath(), e);
             } finally {
                 try {
                     bufferedReader.close();
