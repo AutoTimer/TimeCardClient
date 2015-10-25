@@ -69,7 +69,8 @@ public class TimerActivity extends AppCompatActivity {
     private String host = "http://192.168.224.236:8080";
     private String marshalName = null;
     private String curentLayout = null;
-
+    private Button startStopButton = null;
+    private Button resetButton = null;
 
 
 
@@ -103,6 +104,8 @@ public class TimerActivity extends AppCompatActivity {
         carNumber = (EditText) findViewById(R.id.carNumber);
         penaltyPicker= (NumberPicker) findViewById(R.id.penaltyPicker);
         wrongTest = (Switch)findViewById(R.id.wTSwitch);
+        startStopButton = (Button)findViewById(R.id.button);
+        resetButton = (Button)findViewById(R.id.resetButton);
 
         String[] nums = new String[21];
         for(int i=0; i<nums.length; i++)
@@ -197,13 +200,26 @@ public class TimerActivity extends AppCompatActivity {
             startTime = System.currentTimeMillis();
             timerHandler.removeCallbacks(startTimer);
             timerHandler.postDelayed(startTimer, 0);
-            saveFab.setVisibility(View.INVISIBLE);
+            saveFab.hide();
+            resetButton.setEnabled(false);
         } else {
             stopTime = System.currentTimeMillis();
             timerStarted = false;
             timerHandler.removeCallbacks(startTimer);
-            saveFab.setVisibility(View.VISIBLE);
+            startStopButton.setEnabled(false);
+            saveFab.show();
+            resetButton.setEnabled(true);
+            startStopButton.setEnabled(false);
         }
+    }
+
+    public void onReset(View view){
+        stopTime = System.currentTimeMillis();
+        timerStarted = false;
+        timerHandler.removeCallbacks(startTimer);
+        startStopButton.setEnabled(true);
+        updateTimer(0);
+        saveFab.hide();
     }
 
     Runnable startTimer = new Runnable() {
@@ -235,6 +251,7 @@ public class TimerActivity extends AppCompatActivity {
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
+                        saveFab.hide();
                         Toast.makeText(TimerActivity.this, "Saving....", Toast.LENGTH_SHORT).show();
                         JSONObject JsonPayload = createPayload();
                         writeToFile(JsonPayload.toString(), OUTPUT_RESULTS_FILENAME);

@@ -31,6 +31,19 @@
         android:layout_below="@+id/timer"
         android:layout_centerHorizontal="true" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/resetButtonTxt"
+        android:id="@+id/resetButton"
+        android:onClick="onReset"
+        android:nestedScrollingEnabled="true"
+        android:width="150dp"
+        android:height="75dp"
+        android:layout_below="@+id/timer"
+        android:layout_toRightOf="@+id/button"
+        android:layout_centerHorizontal="true" />
+
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

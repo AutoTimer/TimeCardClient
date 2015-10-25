@@ -14,5 +14,6 @@
     <string name="layoutKey">LayoutKey</string>
     <string name="marshalKey">MarshalKey</string>
     <string name="hostKey">HostKey</string>
+    <string name="resetButtonTxt">Reset</string>
 
 </resources>
