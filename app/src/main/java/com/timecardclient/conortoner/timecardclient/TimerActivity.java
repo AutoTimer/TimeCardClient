@@ -196,12 +196,14 @@ public class TimerActivity extends AppCompatActivity {
 
     public void onStartStop(View view) {
         if (!timerStarted) {
-            timerStarted = true;
-            startTime = System.currentTimeMillis();
-            timerHandler.removeCallbacks(startTimer);
-            timerHandler.postDelayed(startTimer, 0);
-            saveFab.hide();
-            resetButton.setEnabled(false);
+            if(allFieldsPopulated()) {
+                timerStarted = true;
+                startTime = System.currentTimeMillis();
+                timerHandler.removeCallbacks(startTimer);
+                timerHandler.postDelayed(startTimer, 0);
+                saveFab.hide();
+                resetButton.setEnabled(false);
+            }
         } else {
             stopTime = System.currentTimeMillis();
             timerStarted = false;
@@ -211,6 +213,17 @@ public class TimerActivity extends AppCompatActivity {
             resetButton.setEnabled(true);
             startStopButton.setEnabled(false);
         }
+    }
+
+    private boolean allFieldsPopulated() {
+        boolean result = carNumber.getText() != null && !"".equals(carNumber.getText().toString().trim());
+        if(!result){
+            new AlertDialog.Builder(this)
+                    .setTitle("Ooops!")
+                    .setMessage("You haven't entered a car number!")
+                    .setIcon(android.R.drawable.ic_dialog_alert).show();
+        }
+        return result;
     }
 
     public void onReset(View view){
