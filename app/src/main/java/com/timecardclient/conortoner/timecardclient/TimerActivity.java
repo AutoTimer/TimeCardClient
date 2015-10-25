@@ -252,6 +252,7 @@ public class TimerActivity extends AppCompatActivity {
             payload.put("wrongTest", wrongTest.isChecked());
             payload.put("penalty", penaltyPicker.getValue());
             payload.put("carNumber", carNumber.getText());
+            payload.put("marshalName", marshalName);
         } catch (JSONException e) {
             e.printStackTrace();
         }
