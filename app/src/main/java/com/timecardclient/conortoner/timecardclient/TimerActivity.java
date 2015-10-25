@@ -66,7 +66,7 @@ public class TimerActivity extends AppCompatActivity {
     private Switch wrongTest;
     private ArrayDeque<String> retryQue = new ArrayDeque<>();
     private Handler reQueHandler = new Handler();
-    private String host = "http://192.168.224.236/:8080";
+    private String host = "http://192.168.224.236:8080";
     private String marshalName = null;
     private String curentLayout = null;
 
