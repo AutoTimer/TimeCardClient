@@ -12,7 +12,8 @@
         android:hint="@string/hostHint"
         android:layout_above="@+id/marshalEditText"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="92dp" />
+        android:layout_marginBottom="92dp"
+        android:singleLine="true"/>
 
     <EditText
         android:layout_width="wrap_content"
@@ -21,7 +22,8 @@
         android:width="200dp"
         android:hint="@string/marshalHint"
         android:layout_centerVertical="true"
-        android:layout_alignStart="@+id/hostEditText" />
+        android:layout_alignStart="@+id/hostEditText"
+        android:singleLine="true"/>
 
     <EditText
         android:layout_width="wrap_content"
@@ -31,5 +33,6 @@
         android:hint="@string/layoutHint"
         android:layout_below="@+id/marshalEditText"
         android:layout_alignStart="@+id/hostEditText"
-        android:layout_marginTop="84dp" />
+        android:layout_marginTop="84dp"
+        android:singleLine="true"/>
 </RelativeLayout>
