@@ -216,15 +216,27 @@ public class TimerActivity extends AppCompatActivity {
     }
 
     private boolean allFieldsPopulated() {
-        boolean result = carNumber.getText() != null && !"".equals(carNumber.getText().toString().trim());
+        try {
+            validateStringField("Layout", curentLayout);
+            validateStringField("Car Number", carNumber.getText().toString());
+            validateStringField("Marshal Name", marshalName);
+            return true;
+        } catch(Exception e) {
+            return false;
+        }
+    }
+
+    private void validateStringField(String name, String value) throws Exception {
+        boolean result = (value != null && !"".equals(value.trim()));
         if(!result){
             new AlertDialog.Builder(this)
                     .setTitle("Ooops!")
-                    .setMessage("You haven't entered a car number!")
+                    .setMessage(String.format("You haven't entered %s!",name))
                     .setIcon(android.R.drawable.ic_dialog_alert).show();
+            throw new Exception(String.format("Field: %s invalid.", name));
         }
-        return result;
     }
+
 
     public void onReset(View view){
         stopTime = System.currentTimeMillis();
