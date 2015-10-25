@@ -108,7 +108,7 @@ public class TimerActivity extends AppCompatActivity {
         for(int i=0; i<nums.length; i++)
             nums[i] = Integer.toString(i);
 
-        penaltyPicker.setMinValue(1);
+        penaltyPicker.setMinValue(0);
         penaltyPicker.setMaxValue(20);
         penaltyPicker.setWrapSelectorWheel(false);
         penaltyPicker.setDisplayedValues(nums);
@@ -246,7 +246,7 @@ public class TimerActivity extends AppCompatActivity {
     private JSONObject createPayload() {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("layout","1");
+            payload.put("layout",curentLayout);
             payload.put("startTime",startTime);
             payload.put("endTime",stopTime);
             payload.put("wrongTest", wrongTest.isChecked());
