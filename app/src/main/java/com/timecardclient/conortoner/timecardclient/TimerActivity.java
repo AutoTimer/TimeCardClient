@@ -97,7 +97,7 @@ public class TimerActivity extends AppCompatActivity {
     private Runnable reQue = new Runnable() {
         @Override
         public void run() {
-            if (retryQue.size() > 0) {
+            while (retryQue.size() > 0) {
                 retryFailedSaves();
             }
             reQueHandler.postDelayed(this, 20000);
@@ -276,6 +276,9 @@ public class TimerActivity extends AppCompatActivity {
         timerStarted = false;
         timerHandler.removeCallbacks(startTimer);
         startStopButton.setEnabled(true);
+        penaltyPicker.setValue(0);
+        carNumber.setText("");
+        wrongTest.setChecked(false);
         updateTimer(0);
         saveFab.hide();
     }
@@ -445,7 +448,7 @@ public class TimerActivity extends AppCompatActivity {
             try {
                 Log.d(LOG_TAG, "Trying to write to file: " + file.getAbsolutePath());
                 fileWriter = new FileWriter(file, true);
-                fileWriter.write(result);
+                fileWriter.write(result+"\n");
             } catch (IOException e) {
                 Log.e(LOG_TAG, String.format("Something went wrong writing to the file: %s", file.getName()), e);
             } finally {
